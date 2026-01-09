@@ -1,5 +1,5 @@
 <template>
-  <div class="relative overflow-x-hidden scroll-smooth">
+  <div class="relative bg-[url('/gridd.png')] overflow-x-hidden scroll-smooth">
     <!-- Hero / Parallax Section -->
     <section
       class="relative flex min-h-[85vh] items-center justify-center text-white"

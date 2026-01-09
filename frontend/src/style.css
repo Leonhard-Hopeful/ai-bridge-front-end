@@ -12,6 +12,28 @@
   background: #1e3a8a;
 }
 
+/* Styling for Markdown Output */
+.markdown-content h1 { @apply text-3xl font-black mb-4 text-white uppercase; }
+.markdown-content h2 { @apply text-2xl font-bold mt-6 mb-3 text-white border-b border-dark-blue; }
+.markdown-content h3 { @apply text-xl font-bold mt-4 mb-2 text-white; }
+.markdown-content p { @apply mb-4 leading-relaxed; }
+.markdown-content strong { @apply text-white font-black; } /* This handles your **text** */
+.markdown-content ul { @apply list-disc ml-6 mb-4; }
+.markdown-content ol { @apply list-decimal ml-6 mb-4; }
+.markdown-content li { @apply mb-1; }
+.markdown-content code { @apply bg-dark-blue px-1 rounded font-mono text-sm; }
+
+@import "tailwindcss";
+
+@theme {
+  /* Define the custom colors here */
+  --color-dark-blue: #1a365d;
+  --color-cream-white: #fffdfa;
+  
+  /* You can also add specific shades if needed */
+  --color-ai-primary: #3b82f6;
+}
+
 /* :root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;
