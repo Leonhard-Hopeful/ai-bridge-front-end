@@ -3,6 +3,8 @@ import { ref, onMounted, nextTick } from 'vue'
 import { marked } from 'marked'
 import katex from 'katex'
 import 'katex/dist/katex.min.css'
+// Import the a11y extension to enable screen reader support 🔊
+import 'katex/dist/contrib/auto-render.min.js' 
 
 const topic = ref('')
 const community = ref('')
@@ -24,32 +26,36 @@ marked.setOptions({ breaks: true, gfm: true })
 const renderMarkdownAndMath = (text) => {
   if (!text) return ''
   
-  // STEP 1: Fix common AI double-escape issues
-  // This turns \\frac into \frac so KaTeX can read it
   let cleanText = text.replace(/\\\\/g, '\\')
+
+  // Shared KaTeX options for accessibility
+  const katexOptions = (isBlock) => ({
+    displayMode: isBlock,
+    throwOnError: false,
+    // This ensures KaTeX outputs both the visual MathML and the 
+    // accessible screen-reader-friendly spans
+    output: 'htmlAndMathml', 
+    trust: true
+  })
 
   // STEP 2: Render Display Math Blocks: $$ formula $$
   cleanText = cleanText.replace(/\$\$(.*?)\$\$/gs, (match, formula) => {
     try {
-      return `<div class="math-block">${katex.renderToString(formula.trim(), { 
-        displayMode: true, 
-        throwOnError: false 
-      })}</div>`
+      return `<div class="math-block" aria-label="Mathematical Equation">
+        ${katex.renderToString(formula.trim(), katexOptions(true))}
+      </div>`
     } catch (e) { return match }
   })
 
   // STEP 3: Render Inline Math: $ formula $
-  // We use a more careful regex to avoid catching regular dollar signs
   cleanText = cleanText.replace(/\$([^\$]+)\$/g, (match, formula) => {
     try {
-      return katex.renderToString(formula.trim(), { 
-        displayMode: false, 
-        throwOnError: false 
-      })
+      return `<span aria-label="math">
+        ${katex.renderToString(formula.trim(), katexOptions(false))}
+      </span>`
     } catch (e) { return match }
   })
 
-  // STEP 4: Final Markdown pass
   return marked.parse(cleanText)
 }
 
@@ -126,6 +132,7 @@ onMounted(() => {
   window.speechSynthesis.getVoices() 
 })
 </script>
+
 <template>
   <main id="bg" class="h-screen bg-slate-50 text-black flex flex-col overflow-hidden font-sans">
     
@@ -217,11 +224,19 @@ onMounted(() => {
 
 
 #bg {
-  /* This points to public/Screenshot (757).png */
   background-image: url('/gridr.png');
   background-size: cover;
   background-position: center;
   background-attachment: fixed;
   background-repeat: no-repeat;
+}
+
+/* Hide the raw MathML from visual users while leaving it for screen readers */
+:deep(.katex-mathml) {
+  clip: rect(1px, 1px, 1px, 1px);
+  height: 1px;
+  overflow: hidden;
+  position: absolute;
+  width: 1px;
 }
 </style>
