@@ -127,7 +127,7 @@ onMounted(() => {
 })
 </script>
 <template>
-  <main class="h-screen bg-slate-50 text-black flex flex-col overflow-hidden font-sans">
+  <main id="bg" class="h-screen bg-slate-50 text-black flex flex-col overflow-hidden font-sans">
     
     <div v-if="hasStarted" class="w-full h-2 bg-gray-200 relative">
       <div class="h-full bg-blue-600 transition-all duration-700" :style="{ width: progress + '%' }"></div>
@@ -214,4 +214,14 @@ onMounted(() => {
 .overflow-y-auto::-webkit-scrollbar { width: 10px; }
 .overflow-y-auto::-webkit-scrollbar-track { background: #fff; border-left: 2px solid #000; }
 .overflow-y-auto::-webkit-scrollbar-thumb { background: #000; }
+
+
+#bg {
+  /* This points to public/Screenshot (757).png */
+  background-image: url('/gridr.png');
+  background-size: cover;
+  background-position: center;
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
 </style>
