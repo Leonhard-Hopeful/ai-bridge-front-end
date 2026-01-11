@@ -5,10 +5,11 @@ import { useToast } from 'vue-toastification'
 const toast = useToast()
 const ocrResult = ref('')
 const isLoading = ref(false)
-const processingStep = ref(0) 
+const processingStep = ref(0)
+const imagePreview = ref(null) // 🆕 Stores the local image URL
 
 // Timer logic for precision tracking ⏱️
-const timeMS = ref(0) // Total elapsed milliseconds
+const timeMS = ref(0) 
 let timerInterval = null
 
 // Formatter to turn total MS into MM:SS:mmm
@@ -18,7 +19,6 @@ const formattedTime = computed(() => {
   const seconds = totalSeconds % 60
   const milliseconds = timeMS.value % 1000
 
-  // Padding numbers to ensure they stay the same width (e.g., 01 instead of 1)
   const mm = String(minutes).padStart(2, '0')
   const ss = String(seconds).padStart(2, '0')
   const mmm = String(milliseconds).padStart(3, '0')
@@ -31,7 +31,7 @@ const startTimer = () => {
   const startTime = Date.now()
   timerInterval = setInterval(() => {
     timeMS.value = Date.now() - startTime
-  }, 10) // Update every 10ms for smooth millisecond display
+  }, 10)
 }
 
 const stopTimer = () => {
@@ -49,6 +49,14 @@ const steps = [
   { id: 3, label: 'Finalizing' }
 ]
 
+// 🆕 Helper to clear the image if the user wants to restart
+const clearImage = () => {
+  if (isLoading.value) return // Prevent clearing while scanning
+  imagePreview.value = null
+  ocrResult.value = ''
+  processingStep.value = 0
+}
+
 const handleUpload = async (event) => {
   const file = event.target.files[0]
   if (!file) return
@@ -57,6 +65,9 @@ const handleUpload = async (event) => {
     toast.error("Please upload a valid image file (PNG/JPG)")
     return
   }
+
+  // 🆕 Create local preview immediately
+  imagePreview.value = URL.createObjectURL(file)
 
   isLoading.value = true
   processingStep.value = 1
@@ -85,6 +96,7 @@ const handleUpload = async (event) => {
   } catch (err) {
     toast.error("Failed to read notes. Please try again.")
     console.error(err)
+    // Note: We do NOT clear the image on error, so the user can see what failed
   } finally {
     isLoading.value = false
     stopTimer()
@@ -163,10 +175,30 @@ const downloadFile = async (format) => {
              </div>
           </div>
 
-          <label :class="['group flex cursor-pointer flex-col items-center justify-center rounded-lg border-4 border-dashed p-10 text-center transition-all', 
-                          isLoading ? 'border-blue-600 bg-blue-50' : 'border-black hover:bg-yellow-50']">
+          <div v-if="imagePreview" class="relative group rounded-lg border-4 border-black bg-white p-2 shadow-[4px_4px_0px_0px_rgba(0,0,0,1)]">
+            <div class="relative overflow-hidden rounded border-2 border-black bg-gray-100 h-64 flex items-center justify-center">
+              <img :src="imagePreview" class="h-full w-full object-contain" alt="Uploaded note" />
+              
+              <div v-if="isLoading" class="absolute inset-0 bg-black/30 backdrop-blur-[2px] flex flex-col items-center justify-center z-10">
+                <div class="w-full h-1 bg-green-400 absolute top-0 animate-[scan_2s_ease-in-out_infinite] shadow-[0_0_15px_rgba(74,222,128,0.8)]"></div>
+                <div class="bg-black text-white px-3 py-1 text-[10px] font-black uppercase tracking-widest animate-pulse">
+                  Scanning...
+                </div>
+              </div>
+            </div>
+
+            <button 
+              @click="clearImage" 
+              :disabled="isLoading"
+              class="absolute -top-3 -right-3 h-8 w-8 bg-red-500 border-2 border-black text-white flex items-center justify-center font-bold shadow-[2px_2px_0px_0px_rgba(0,0,0,1)] hover:scale-110 active:scale-95 transition-all z-20 disabled:opacity-50 disabled:cursor-not-allowed">
+              ✕
+            </button>
+          </div>
+
+          <label v-else :class="['group flex cursor-pointer flex-col items-center justify-center rounded-lg border-4 border-dashed p-10 text-center transition-all', 
+                        isLoading ? 'border-blue-600 bg-blue-50' : 'border-black hover:bg-yellow-50']">
             <span class="text-lg font-black uppercase italic text-black">
-              {{ isLoading ? 'AI is reading...' : 'Drop notes here' }}
+              Drop notes here
             </span>
             <span class="mt-2 text-xs font-bold text-gray-500 uppercase tracking-widest">Click to browse images</span>
             <input type="file" @change="handleUpload" class="hidden" accept="image/*" />
@@ -207,5 +239,13 @@ const downloadFile = async (format) => {
 .slide-fade-leave-to {
   transform: translateX(20px);
   opacity: 0;
+}
+
+/* 🆕 SCANNER ANIMATION */
+@keyframes scan {
+  0% { top: 0%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { top: 100%; opacity: 0; }
 }
 </style>
