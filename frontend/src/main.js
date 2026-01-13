@@ -6,18 +6,45 @@ import 'animate.css';
 
 // 1. Import Vue Toastification
 import Toast from "vue-toastification";
-// Import the CSS for toasts
 import "vue-toastification/dist/index.css";
 
-// Font Awesome Imports
+// 2. Font Awesome Imports
 import { library } from '@fortawesome/fontawesome-svg-core'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faBars, faXmark, faBridge, faPenNib, faHouse, faFilePdf } from '@fortawesome/free-solid-svg-icons'
 
-// Add icons to the library
-library.add(faBars, faXmark, faBridge, faPenNib, faHouse, faFilePdf)
+/* Import Solid Icons */
+import { 
+  faBars, 
+  faXmark, 
+  faBridge, 
+  faPenNib, 
+  faHouse, 
+  faFilePdf,
+  faCircle // Added this as it is used in your footer status indicators
+} from '@fortawesome/free-solid-svg-icons'
 
-// Toast Configuration Options (Optional)
+/* Import Brand Icons (Used in your Footer) */
+import { 
+  faFacebookF, 
+  faXTwitter, 
+  faWhatsapp 
+} from '@fortawesome/free-brands-svg-icons'
+
+// 3. Add icons to the library
+library.add(
+  faBars, 
+  faXmark, 
+  faBridge, 
+  faPenNib, 
+  faHouse, 
+  faFilePdf, 
+  faCircle,
+  faFacebookF, 
+  faXTwitter, 
+  faWhatsapp
+)
+
+// Toast Configuration Options
 const toastOptions = {
     position: "top-right",
     timeout: 3000,
@@ -33,11 +60,10 @@ const toastOptions = {
     rtl: false
 };
 
-// Create and configure the app
 const app = createApp(App);
 
-app.component('font-awesome-icon', FontAwesomeIcon); // Register FontAwesome globally
-app.use(router); // Use Router
-app.use(Toast, toastOptions); // Use Toastification with our options
+app.component('font-awesome-icon', FontAwesomeIcon); 
+app.use(router); 
+app.use(Toast, toastOptions); 
 
 app.mount('#app');
