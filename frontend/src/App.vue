@@ -1,5 +1,8 @@
 <script setup>
 import { ref } from 'vue'
+import { useRoute } from 'vue-router'
+
+const route = useRoute()
 
 const isMenuOpen = ref(false)
 const toggleMenu = () => { isMenuOpen.value = !isMenuOpen.value }
@@ -20,6 +23,7 @@ const currentYear = new Date().getFullYear()
           <router-link to="/" class="nav-link" active-class="active-nav">Home</router-link>
           <router-link to="/bridge" class="nav-link" active-class="active-nav">The Bridge</router-link>
           <router-link to="/clerk" class="nav-link" active-class="active-nav">Digital Clerk</router-link>
+          <router-link to="/experts" class="nav-link" active-class="active-nav">Experts</router-link>
         </div>
 
         <button @click="toggleMenu" class="md:hidden text-yellow-400 text-xl">
@@ -44,7 +48,7 @@ const currentYear = new Date().getFullYear()
       <router-view></router-view>
     </main>
 
-    <footer class="bg-black text-white border-t-8 border-black pt-16 pb-8 px-6">
+    <footer v-if="route.path !== '/bridge'" class="bg-black text-white border-t-8 border-black pt-16 pb-8 px-6">
       <div class="max-w-6xl mx-auto">
         <div class="grid grid-cols-1 md:grid-cols-3 gap-12 mb-16">
           
