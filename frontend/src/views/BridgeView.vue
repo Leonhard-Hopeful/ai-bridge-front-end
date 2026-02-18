@@ -1,188 +1,212 @@
 <template>
-  <div
-    class="bridge-container h-[calc(100vh-80px)] w-full overflow-hidden bg-slate-50 relative flex flex-col font-sans"
-  >
+  <!-- KaTeX CDN -->
+  <teleport to="head">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css" />
+  </teleport>
+
+  <div class="bridge-container h-[calc(100vh-80px)] w-full overflow-hidden bg-[#F5F4EF] relative flex flex-col">
+
+    <!-- ── Grid background ── -->
+    <div class="absolute inset-0 grid-bg pointer-events-none z-0"></div>
+
+    <!-- ── Floating math glyphs ── -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none z-0">
-      <div class="shape shape-1">∫</div>
-      <div class="shape shape-2">π</div>
-      <div class="shape shape-3">∑</div>
-      <div class="shape shape-4">Δ</div>
-      <div class="shape shape-5">Ω</div>
+      <div class="glyph glyph-1">∫</div>
+      <div class="glyph glyph-2">π</div>
+      <div class="glyph glyph-3">∑</div>
+      <div class="glyph glyph-4">Δ</div>
+      <div class="glyph glyph-5">Ω</div>
     </div>
 
-    <transition name="fade">
-      <div
-        v-if="showSplash"
-        class="fixed inset-0 z-[100] bg-slate-950 flex items-center justify-center p-6 overflow-hidden"
-      >
+    <!-- ══════════════════════ SPLASH ══════════════════════ -->
+    <transition name="splash-fade">
+      <div v-if="showSplash" class="fixed inset-0 z-[100] splash-bg flex items-center justify-center p-6 overflow-hidden">
         <canvas ref="threeCanvas" class="absolute inset-0 z-0"></canvas>
 
-        <div class="max-w-2xl text-center space-y-8 z-10 relative">
-          <div
-            class="inline-block bg-blue-600 text-white px-6 py-2 font-black text-4xl italic transform -skew-x-12 shadow-[8px_8px_0px_0px_rgba(255,255,255,1)]"
-          >
-            THE BRIDGE
+        <div class="corner-frame corner-tl"></div>
+        <div class="corner-frame corner-tr"></div>
+        <div class="corner-frame corner-bl"></div>
+        <div class="corner-frame corner-br"></div>
+
+        <div class="relative z-10 max-w-xl text-center space-y-10">
+          <!-- Eyebrow -->
+          <div class="flex items-center gap-3 justify-center">
+            <div class="h-px w-16 bg-blue-400 opacity-60"></div>
+            <span class="text-blue-300 text-[10px] font-bold tracking-[0.35em] uppercase">Cameroon's AI Learning Lab</span>
+            <div class="h-px w-16 bg-blue-400 opacity-60"></div>
           </div>
-          <p
-            class="text-white text-xl font-bold tracking-tight leading-relaxed drop-shadow-lg"
-          >
-            Welcome to the Socratic learning corridor. <br />
-            We don't just give answers. We build understanding through local
-            context and rigorous inquiry.
-          </p>
-          <button
-            @click="dismissSplash"
-            class="bg-yellow-400 text-black px-12 py-4 font-black uppercase text-xl border-4 border-white hover:bg-white transition-colors shadow-2xl"
-          >
+
+          <!-- Logotype -->
+          <div class="space-y-1">
+            <h1 class="splash-title">The<br/>Bridge</h1>
+            <p class="text-blue-300 text-sm font-medium tracking-widest uppercase">Socratic · Local · Rigorous</p>
+          </div>
+
+          <!-- Descriptor pills -->
+          <div class="flex flex-wrap justify-center gap-2">
+            <span v-for="s in ['Contextual Learning', 'Socratic Method', 'Local Analogies']" :key="s" class="subject-pill">{{ s }}</span>
+          </div>
+
+          <button @click="dismissSplash" class="splash-btn">
             Cross The Bridge
+            <svg class="inline ml-2 w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </button>
+
+          <p class="text-blue-500 text-xs tracking-wider">We don't just give answers — we build understanding</p>
         </div>
       </div>
     </transition>
 
-    <div
-      v-if="!hasStarted && !showSplash"
-      class="flex-1 flex items-center justify-center p-6 z-20"
-    >
-      <div
-        class="max-w-md w-full bg-white border-4 border-black p-8 shadow-[12px_12px_0px_0px_rgba(0,0,0,1)] rounded-xl relative overflow-hidden"
-      >
-        <div class="absolute top-0 left-0 w-full h-2 bg-blue-600"></div>
-        <h2 class="text-3xl font-black mb-2 uppercase tracking-tighter italic">
-          Join the Quarter
-        </h2>
-        <p
-          class="text-xs font-bold text-gray-500 uppercase tracking-widest mb-6"
-        >
-          Cameroon's AI Learning Lab
-        </p>
+    <!-- ══════════════ PROGRESS LINE (sits flush under the app nav) ══════════════ -->
+    <div class="relative z-30 shrink-0">
+      <!-- Thin progress track -->
+      <div class="w-full h-[3px] bg-blue-100">
+        <div
+          class="h-full bg-[#FBBF24] transition-all duration-700"
+          :style="{ width: (hasStarted ? progress : 0) + '%' }"
+        ></div>
+      </div>
+      <!-- Status + topic strip -->
+      <div class="bg-white border-b border-blue-50 px-6 py-1.5 flex items-center justify-between">
+        <div class="flex items-center gap-1.5">
+          <span :class="['status-dot', isConnected ? 'online' : 'offline']"></span>
+          <span class="text-[10px] text-blue-400 uppercase tracking-widest font-semibold" style="font-family:'DM Mono',monospace">
+            {{ isConnected ? 'Bridge Online' : 'Connecting...' }}
+          </span>
+        </div>
+        <div v-if="hasStarted" class="flex items-center gap-3">
+          <span class="text-[10px] text-blue-300 uppercase tracking-widest font-bold" style="font-family:'DM Mono',monospace">
+            {{ topic }}
+          </span>
+          <span class="text-[10px] text-[#FBBF24] font-bold" style="font-family:'DM Mono',monospace">{{ progress }}%</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════════════════ SETUP FORM ══════════════════════ -->
+    <div v-if="!hasStarted && !showSplash" class="flex-1 flex items-center justify-center p-6 z-20">
+      <div class="setup-card">
+        <div class="setup-card-stripe"></div>
+
+        <div class="mb-6">
+          <h2 class="setup-title">Join the Quarter</h2>
+          <p class="setup-subtitle">Cameroon's AI Learning Lab</p>
+        </div>
 
         <div class="space-y-4">
-          <div class="space-y-1">
-            <label class="text-[10px] font-black uppercase"
-              >Learning Focus</label
-            >
+          <div class="space-y-1.5">
+            <label class="form-label">Learning Focus</label>
             <input
               v-model="topic"
               placeholder="e.g. Quantum Physics or History"
-              class="w-full border-2 border-black p-4 font-bold outline-none focus:bg-yellow-50 rounded-lg transition-all"
+              class="form-input"
+              @keyup.enter="startLesson"
             />
           </div>
-          <div class="space-y-1">
-            <label class="text-[10px] font-black uppercase"
-              >Your Community</label
-            >
+
+          <div class="space-y-1.5">
+            <label class="form-label">Your Community</label>
             <input
               v-model="community"
               placeholder="e.g. Douala, Molyko, or Bastos"
-              class="w-full border-2 border-black p-4 font-bold outline-none focus:bg-yellow-50 rounded-lg transition-all"
+              class="form-input"
+              @keyup.enter="startLesson"
             />
           </div>
-          <button
-            @click="startLesson"
-            class="w-full bg-blue-600 text-white font-black py-5 uppercase text-xl border-2 border-black shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] active:shadow-none active:translate-x-1 active:translate-y-1 transition-all rounded-lg"
-          >
+
+          <button @click="startLesson" class="start-btn">
             Initialize Lesson
+            <svg class="inline ml-2 w-5 h-5" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
           </button>
         </div>
       </div>
     </div>
 
-    <div
-      v-else-if="hasStarted"
-      class="flex-1 flex flex-col min-h-0 relative z-10"
-    >
-      <div class="w-full h-1.5 bg-gray-200 shrink-0">
-        <div
-          class="h-full bg-blue-600 transition-all duration-1000 shadow-[0_0_10px_rgba(37,99,235,0.5)]"
-          :style="{ width: progress + '%' }"
-        ></div>
-      </div>
+    <!-- ══════════════════════ CHAT AREA ══════════════════════ -->
+    <div v-else-if="hasStarted" class="flex-1 flex flex-col min-h-0 relative z-10">
 
-      <div
-        ref="scrollContainer"
-        class="flex-1 overflow-y-auto pt-6 pb-44 px-4 scroll-smooth"
-      >
-        <div class="max-w-5xl mx-auto space-y-10">
-          <div
-            v-for="(msg, i) in chatHistory"
-            :key="i"
-            :class="
-              msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'
-            "
-          >
-            <div
-              v-if="msg.role === 'ai'"
-              class="w-full lg:max-w-8xl bg-white border-2 border-black p-6 md:p-10 relative shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] rounded-2xl group"
-            >
-              <div
-                class="absolute -top-4 rounded-md left-6 bg-black text-white px-4 py-1 font-black italic text-xs uppercase tracking-widest"
-              >
-                AI Tutor • {{ community }}
-              </div>
+      <div ref="scrollContainer" class="flex-1 overflow-y-auto px-4 md:px-10 py-8 space-y-8 pb-40 custom-scrollbar">
 
-              <div
-                class="absolute top-4 right-4 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <button
-                  @click="isSpeaking ? stopSpeech() : speak(msg.text)"
-                  class="bg-blue-50 border-2 border-black p-2 hover:bg-yellow-300 transition-all rounded-lg shadow-[2px_2px_0px_0px_rgba(0,0,0,1)]"
-                >
-                  {{ isSpeaking ? "⏹️" : "🔊" }}
-                </button>
-              </div>
+        <div v-for="(msg, i) in chatHistory" :key="i"
+             :class="msg.role === 'user' ? 'flex justify-end' : 'flex justify-start'">
 
-              <div
-                v-html="renderMarkdownAndMath(msg.text)"
-                class="prose prose-blue max-w-none text-lg md:text-xl leading-relaxed markdown-content font-medium"
-              ></div>
+          <!-- ── AI bubble ── -->
+          <div v-if="msg.role === 'ai'"
+               class="msg-bubble msg-assistant group w-full max-w-5xl">
 
-              <div v-if="!msg.text" class="flex gap-2 p-4">
-                <div
-                  class="w-3 h-3 bg-blue-600 rounded-full animate-bounce"
-                ></div>
-                <div
-                  class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:0.2s]"
-                ></div>
-                <div
-                  class="w-3 h-3 bg-blue-600 rounded-full animate-bounce [animation-delay:0.4s]"
-                ></div>
-              </div>
+            <div class="msg-badge badge-assistant">
+              ◈ AI Tutor
+              <span class="opacity-60 ml-1">• {{ community }}</span>
             </div>
 
-            <div
-              v-else
-              class="bg-yellow-300 border-2 border-black p-5 shadow-[6px_6px_0px_0px_rgba(0,0,0,1)] font-bold text-xl italic max-w-[85%] md:max-w-2xl rounded-2xl"
+            <!-- TTS button -->
+            <button
+              @click="isSpeaking ? stopSpeech() : speak(msg.text)"
+              class="tts-btn absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-opacity"
+              :title="isSpeaking ? 'Stop' : 'Listen'"
             >
-              {{ msg.text }}
+              {{ isSpeaking ? '⏹' : '🔊' }}
+            </button>
+
+            <!-- Typing dots -->
+            <div v-if="!msg.text" class="flex gap-1.5 py-2 px-1 items-end">
+              <div class="typing-dot" style="animation-delay:0ms"></div>
+              <div class="typing-dot" style="animation-delay:160ms"></div>
+              <div class="typing-dot" style="animation-delay:320ms"></div>
             </div>
+
+            <div v-else
+                 class="prose prose-blue max-w-none text-[1.05rem] leading-relaxed expert-content font-medium"
+                 v-html="renderMarkdownAndMath(msg.text)">
+            </div>
+          </div>
+
+          <!-- ── User bubble ── -->
+          <div v-else class="msg-bubble msg-user max-w-[85%] md:max-w-2xl">
+            <div class="msg-badge badge-user">✦ You</div>
+            <p class="text-[1.05rem] font-semibold leading-relaxed">{{ msg.text }}</p>
           </div>
         </div>
       </div>
 
-      <div
-        class="fixed bottom-0 left-0 right-0 z-40 p-4 md:p-8 bg-gradient-to-t from-slate-50 via-slate-50/95 to-transparent"
-      >
-        <div class="max-w-5xl mx-auto flex gap-4">
-          <div class="flex-1 relative">
+      <!-- ══════════════════════ INPUT BAR ══════════════════════ -->
+      <div class="fixed bottom-0 left-0 right-0 z-40 footer-bar px-4 md:px-10 py-4">
+        <div class="max-w-5xl mx-auto flex gap-3 items-center">
+
+          <!-- Community tag -->
+          <div class="subject-tag hidden md:flex">
+            <span>{{ community || '—' }}</span>
+          </div>
+
+          <div class="flex-1">
             <input
               v-model="currentInput"
               @keyup.enter="sendMessage()"
-              placeholder="Ask for an analogy or solve a problem..."
-              class="w-full border-4 border-black p-5 text-xl font-bold outline-none bg-white focus:shadow-[8px_8px_0px_0px_rgba(37,99,235,1)] transition-all rounded-2xl shadow-[8px_8px_0px_0px_rgba(0,0,0,1)]"
+              placeholder="Ask for an analogy, solve a problem..."
+              class="query-input w-full outline-none"
               :disabled="isStreaming || !isConnected"
             />
           </div>
+
           <button
             @click="sendMessage()"
             :disabled="isStreaming || !isConnected"
-            class="bg-blue-600 text-white px-8 md:px-16 font-black uppercase text-xl border-2 border-black shadow-[8px_8px_0px_0px_rgba(0,0,0,1)] hover:bg-blue-700 active:shadow-none active:translate-x-[4px] active:translate-y-[4px] transition-all rounded-2xl shrink-0"
+            class="send-btn"
           >
-            {{ isStreaming ? "..." : "SEND" }}
+            <span v-if="!isStreaming">
+              SEND
+              <svg class="inline ml-1.5 w-4 h-4" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" d="M13 7l5 5m0 0l-5 5m5-5H6"/></svg>
+            </span>
+            <span v-else class="flex gap-1 items-center">
+              <div class="typing-dot !bg-black" style="animation-delay:0ms;width:6px;height:6px"></div>
+              <div class="typing-dot !bg-black" style="animation-delay:160ms;width:6px;height:6px"></div>
+              <div class="typing-dot !bg-black" style="animation-delay:320ms;width:6px;height:6px"></div>
+            </span>
           </button>
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -192,107 +216,63 @@ import { marked } from "marked";
 import katex from "katex";
 import hljs from "highlight.js";
 import "highlight.js/styles/github-dark.css";
-
 import "katex/dist/katex.min.css";
-import "katex/dist/contrib/auto-render.min.js";
 import { useToast } from "vue-toastification";
 import * as THREE from "three";
 
 const toast = useToast();
 
-/* ---------------- THREE.JS CONNECTED NODES ---------------- */
+/* ──────────────────────── THREE.JS ──────────────────────── */
 
 const threeCanvas = ref(null);
 let threeRenderer, scene, camera, particles, linesMesh;
 
 const initThree = () => {
   if (!threeCanvas.value) return;
-
   scene = new THREE.Scene();
   camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 12; // Pull back slightly to see more of the web
-
-  threeRenderer = new THREE.WebGLRenderer({
-    canvas: threeCanvas.value,
-    antialias: true,
-    alpha: true,
-  });
+  camera.position.z = 12;
+  threeRenderer = new THREE.WebGLRenderer({ canvas: threeCanvas.value, antialias: true, alpha: true });
   threeRenderer.setSize(window.innerWidth, window.innerHeight);
   threeRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 
-  // 1. Setup Particles
-  const particleCount = 150; // Keep this low for performance with lines
+  const particleCount = 150;
   const coords = new Float32Array(particleCount * 3);
   const velocities = [];
-
   for (let i = 0; i < particleCount; i++) {
     coords[i * 3] = (Math.random() - 0.5) * 20;
     coords[i * 3 + 1] = (Math.random() - 0.5) * 20;
     coords[i * 3 + 2] = (Math.random() - 0.5) * 20;
     velocities.push(new THREE.Vector3((Math.random() - 0.5) * 0.02, (Math.random() - 0.5) * 0.02, (Math.random() - 0.5) * 0.02));
   }
-
   const geometry = new THREE.BufferGeometry();
   geometry.setAttribute('position', new THREE.BufferAttribute(coords, 3));
-
-  const material = new THREE.PointsMaterial({
-    color: 0x2563eb,
-    size: 0.15,
-    transparent: true,
-    opacity: 0.8
-  });
-
-  particles = new THREE.Points(geometry, material);
+  particles = new THREE.Points(geometry, new THREE.PointsMaterial({ color: 0x3b82f6, size: 0.14, transparent: true, opacity: 0.85 }));
   scene.add(particles);
-
-  // 2. Setup Lines (The "Connections")
-  const lineGeometry = new THREE.BufferGeometry();
-  const lineMaterial = new THREE.LineBasicMaterial({ 
-    color: 0x2563eb, 
-    transparent: true, 
-    opacity: 0.2 
-  });
-  linesMesh = new THREE.LineSegments(lineGeometry, lineMaterial);
+  linesMesh = new THREE.LineSegments(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x3b82f6, transparent: true, opacity: 0.15 }));
   scene.add(linesMesh);
 
-  // 3. Animation Loop
   const animate = () => {
     if (!showSplash.value) return;
     requestAnimationFrame(animate);
-
     const positions = particles.geometry.attributes.position.array;
     const linePositions = [];
-
-    // Move particles and check distances
     for (let i = 0; i < particleCount; i++) {
       positions[i * 3] += velocities[i].x;
       positions[i * 3 + 1] += velocities[i].y;
       positions[i * 3 + 2] += velocities[i].z;
-
-      // Bounce off invisible walls
       if (Math.abs(positions[i * 3]) > 10) velocities[i].x *= -1;
       if (Math.abs(positions[i * 3 + 1]) > 10) velocities[i].y *= -1;
-
-      // Draw lines between close nodes
       for (let j = i + 1; j < particleCount; j++) {
-        const dx = positions[i * 3] - positions[j * 3];
-        const dy = positions[i * 3 + 1] - positions[j * 3 + 1];
-        const dz = positions[i * 3 + 2] - positions[j * 3 + 2];
-        const dist = Math.sqrt(dx * dx + dy * dy + dz * dz);
-
-        if (dist < 4) { // Only connect if nodes are close
-          linePositions.push(positions[i * 3], positions[i * 3 + 1], positions[i * 3 + 2]);
-          linePositions.push(positions[j * 3], positions[j * 3 + 1], positions[j * 3 + 2]);
-        }
+        const dx = positions[i*3]-positions[j*3], dy = positions[i*3+1]-positions[j*3+1], dz = positions[i*3+2]-positions[j*3+2];
+        if (Math.sqrt(dx*dx+dy*dy+dz*dz) < 4)
+          linePositions.push(positions[i*3], positions[i*3+1], positions[i*3+2], positions[j*3], positions[j*3+1], positions[j*3+2]);
       }
     }
-
     particles.geometry.attributes.position.needsUpdate = true;
     linesMesh.geometry.setAttribute('position', new THREE.Float32BufferAttribute(linePositions, 3));
-
     threeRenderer.render(scene, camera);
   };
-
   animate();
 
   window.addEventListener("resize", () => {
@@ -302,42 +282,112 @@ const initThree = () => {
   });
 };
 
-/* ---------------- MARKDOWN + CODE SETUP ---------------- */
+/* ──────────────────────── MARKDOWN + KATEX ──────────────────────── */
 
-marked.setOptions({
-  breaks: true,
-  gfm: true,
-  headerIds: false,
-  mangle: false,
-  sanitize: false,
-});
+marked.setOptions({ breaks: true, gfm: true, headerIds: false, mangle: false, sanitize: false });
 
-const markdownRenderer = new marked.Renderer(); // Renamed 'renderer' to 'markdownRenderer'
-
+const markdownRenderer = new marked.Renderer();
 markdownRenderer.code = (code, language) => {
   const valid = language && hljs.getLanguage(language);
-  const highlighted = valid
-    ? hljs.highlight(code, { language }).value
-    : hljs.highlightAuto(code).value;
-
-  return `
-  <div class="code-wrapper group relative">
+  const highlighted = valid ? hljs.highlight(code, { language }).value : hljs.highlightAuto(code).value;
+  return `<div class="code-wrapper group relative">
     <button class="copy-btn absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity"
-      onclick="navigator.clipboard.writeText(\`${code.replace(/`/g, "\\`")}\`).then(()=>window.dispatchEvent(new CustomEvent('code-copied')))">
-      📋
-    </button>
-    <pre class="code-block">
-      <code class="hljs ${language || ""}">
-        ${highlighted}
-      </code>
-    </pre>
-  </div>
-  `;
+      onclick="navigator.clipboard.writeText(\`${code.replace(/`/g, "\\`")}\`).then(()=>window.dispatchEvent(new CustomEvent('code-copied')))">📋</button>
+    <pre class="code-block"><code class="hljs ${language || ""}">${highlighted}</code></pre>
+  </div>`;
 };
-
 marked.use({ renderer: markdownRenderer });
 
-/* ---------------- UI STATE ---------------- */
+const renderMarkdownAndMath = (text) => {
+  if (!text) return "";
+  let cleanText = text.replace(/\\\\/g, "\\");
+  const lines = cleanText.split("\n");
+  let result = "", inCodeBlock = false, codeBuffer = "", codeLang = "", normalTextBuffer = "";
+
+  const flushNormal = () => {
+    if (!normalTextBuffer.trim()) return;
+    let temp = normalTextBuffer;
+
+    // ── STEP 1: Extract all math expressions and replace with unique placeholders.
+    // This prevents marked.parse() from escaping or mangling the rendered KaTeX HTML.
+    const mathChunks = {};
+    let chunkIdx = 0;
+    const placeholder = (html) => {
+      const key = `%%MATH_${chunkIdx++}%%`;
+      mathChunks[key] = html;
+      return key;
+    };
+
+    // Display math $$...$$ — must come BEFORE inline to avoid double-matching
+    temp = temp.replace(/\$\$([\s\S]+?)\$\$/g, (_, f) => {
+      try {
+        const html = `<div class="katex-display-wrap">${katex.renderToString(f.trim(), { displayMode: true, throwOnError: false, trust: true })}</div>`;
+        return placeholder(html);
+      } catch { return _; }
+    });
+
+    // Inline math $...$ — avoid matching $$ and lone $ (currency)
+    temp = temp.replace(/(?<!\$)\$(?!\$)([^\n$]+?)(?<!\$)\$(?!\$)/g, (_, f) => {
+      // Skip if it looks like currency: starts with digit or is very short number
+      if (/^\d+(\.\d+)?$/.test(f.trim())) return _;
+      try {
+        const html = `<span class="inline-math">${katex.renderToString(f.trim(), { displayMode: false, throwOnError: false, trust: true })}</span>`;
+        return placeholder(html);
+      } catch { return _; }
+    });
+
+    // ── STEP 2: Run marked on the text with safe placeholders (no math HTML)
+    let parsed = marked.parse(temp);
+
+    // ── STEP 3: Restore the rendered KaTeX HTML back into the parsed output
+    for (const [key, html] of Object.entries(mathChunks)) {
+      parsed = parsed.replace(key, html);
+    }
+
+    result += parsed;
+    normalTextBuffer = "";
+  };
+
+  for (let line of lines) {
+    const fence = line.match(/^```(\w*)/);
+    if (fence) {
+      flushNormal();
+      if (!inCodeBlock) { inCodeBlock = true; codeLang = fence[1] || ""; codeBuffer = ""; }
+      else {
+        inCodeBlock = false;
+        const hl = codeLang && hljs.getLanguage(codeLang)
+          ? hljs.highlight(codeBuffer, { language: codeLang }).value
+          : hljs.highlightAuto(codeBuffer).value;
+        result += `<div class="code-wrapper group relative">
+          <button class="copy-btn absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity" data-code="${encodeURIComponent(codeBuffer)}">📋</button>
+          <pre class="code-block"><code class="hljs ${codeLang}">${hl}</code></pre>
+        </div>`;
+      }
+      continue;
+    }
+    if (inCodeBlock) codeBuffer += line + "\n";
+    else normalTextBuffer += line + "\n";
+  }
+
+  flushNormal();
+  if (inCodeBlock) result += `<pre class="code-block-stream">${codeBuffer}</pre>`;
+  return result;
+};
+
+/* ──────────────────────── SPEECH ──────────────────────── */
+
+const isSpeaking = ref(false);
+const speak = (text) => {
+  window.speechSynthesis.cancel();
+  const clean = text.replace(/<\/?[^>]+(>|$)/g, "").replace(/\$\$.*?\$\$/g, "").replace(/\$.*?\$/g, "");
+  const utt = new SpeechSynthesisUtterance(clean);
+  utt.onstart = () => (isSpeaking.value = true);
+  utt.onend = () => (isSpeaking.value = false);
+  window.speechSynthesis.speak(utt);
+};
+const stopSpeech = () => { window.speechSynthesis.cancel(); isSpeaking.value = false; };
+
+/* ──────────────────────── UI STATE ──────────────────────── */
 
 const showSplash = ref(true);
 const topic = ref("");
@@ -350,147 +400,30 @@ const hasStarted = ref(false);
 const progress = ref(0);
 const scrollContainer = ref(null);
 const sessionId = ref("");
-const isSpeaking = ref(false);
 
 let socket = null;
 
-/* ---------------- COPY TOAST LISTENER ---------------- */
+window.addEventListener("code-copied", () => toast.success("Code copied to clipboard!"));
 
-window.addEventListener("code-copied", () => {
-  toast.success("Code copied to clipboard");
-});
-
-/* ---------------- MARKDOWN + KATEX ---------------- */
-
-const renderMarkdownAndMath = (text) => {
-  if (!text) return "";
-
-  let cleanText = text.replace(/\\\\/g, "\\");
-
-  const lines = cleanText.split("\n");
-  let result = "";
-  let inCodeBlock = false;
-  let codeBuffer = "";
-  let codeLang = "";
-  let normalTextBuffer = "";
-
-  const flushNormalText = () => {
-    if (normalTextBuffer.trim()) {
-      let temp = normalTextBuffer;
-
-      temp = temp.replace(/\$\$(.*?)\$\$/gs, (match, formula) => {
-        try {
-          return `<div class="math-block">${katex.renderToString(formula.trim(), { displayMode: true, throwOnError: false, trust: true })}</div>`;
-        } catch {
-          return match;
-        }
-      });
-
-      temp = temp.replace(/\$([^\$]+)\$/g, (match, formula) => {
-        try {
-          return `<span class="inline-math">${katex.renderToString(formula.trim(), { displayMode: false, throwOnError: false, trust: true })}</span>`;
-        } catch {
-          return match;
-        }
-      });
-
-      result += marked.parse(temp);
-      normalTextBuffer = "";
-    }
-  };
-
-  for (let line of lines) {
-    const codeFenceMatch = line.match(/^```(\w*)/);
-    if (codeFenceMatch) {
-      flushNormalText();
-
-      if (!inCodeBlock) {
-        inCodeBlock = true;
-        codeLang = codeFenceMatch[1] || "";
-        codeBuffer = "";
-      } else {
-        inCodeBlock = false;
-        const highlighted =
-          codeLang && hljs.getLanguage(codeLang)
-            ? hljs.highlight(codeBuffer, { language: codeLang }).value
-            : hljs.highlightAuto(codeBuffer).value;
-
-        result += `
-        <div class="code-wrapper group relative">
-          <button class="copy-btn absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity" data-code="${encodeURIComponent(codeBuffer)}">📋</button>
-          <pre class="code-block"><code class="hljs ${codeLang}">${highlighted}</code></pre>
-        </div>
-        `;
-      }
-      continue;
-    }
-
-    if (inCodeBlock) {
-      codeBuffer += line + "\n";
-    } else {
-      normalTextBuffer += line + "\n";
-    }
-  }
-
-  flushNormalText();
-
-  if (inCodeBlock) {
-    result += `<pre class="code-block-stream">${codeBuffer}</pre>`;
-  }
-
-  return result;
-};
-
-/* ---------------- SPEECH ---------------- */
-
-const speak = (text) => {
-  window.speechSynthesis.cancel();
-  const cleanText = text
-    .replace(/<\/?[^>]+(>|$)/g, "")
-    .replace(/\$\$.*?\$\$/g, "")
-    .replace(/\$.*?\$/g, "");
-  const utterance = new SpeechSynthesisUtterance(cleanText);
-  utterance.onstart = () => (isSpeaking.value = true);
-  utterance.onend = () => (isSpeaking.value = false);
-  window.speechSynthesis.speak(utterance);
-};
-
-const stopSpeech = () => {
-  window.speechSynthesis.cancel();
-  isSpeaking.value = false;
-};
-
-/* ---------------- WEBSOCKET ---------------- */
+/* ──────────────────────── WEBSOCKET ──────────────────────── */
 
 const connectWS = () => {
   socket = new WebSocket("ws://127.0.0.1:8000/ws/bridge");
-
-  socket.onopen = () => {
-    isConnected.value = true;
-    toast.success("Bridge Online");
-  };
-
+  socket.onopen = () => { isConnected.value = true; toast.success("Bridge Online"); };
   socket.onmessage = (event) => {
     const data = JSON.parse(event.data);
     const lastMsg = chatHistory.value[chatHistory.value.length - 1];
-
     if (data.type === "content" && lastMsg && lastMsg.role === "ai") {
       lastMsg.text += data.payload;
       chatHistory.value = [...chatHistory.value];
     }
-
     if (data.type === "done") {
       isStreaming.value = false;
       if (progress.value < 100) progress.value += 10;
     }
-
     nextTick(scrollToBottom);
   };
-
-  socket.onclose = () => {
-    isConnected.value = false;
-    setTimeout(connectWS, 4000);
-  };
+  socket.onclose = () => { isConnected.value = false; setTimeout(connectWS, 4000); };
 };
 
 const dismissSplash = () => (showSplash.value = false);
@@ -507,137 +440,419 @@ const startLesson = () => {
 const sendMessage = (textOverride = null) => {
   const text = textOverride || currentInput.value.trim();
   if (!text || !isConnected.value) return;
-
-  if (!textOverride)
-    chatHistory.value.push({ role: "user", text, timestamp: new Date() });
-
+  if (!textOverride) chatHistory.value.push({ role: "user", text, timestamp: new Date() });
   chatHistory.value.push({ role: "ai", text: "", timestamp: new Date() });
-
   isStreaming.value = true;
-
-  socket.send(
-    JSON.stringify({
-      message: text,
-      topic: topic.value,
-      community: community.value,
-      session_id: sessionId.value,
-    }),
-  );
-
+  socket.send(JSON.stringify({ message: text, topic: topic.value, community: community.value, session_id: sessionId.value }));
   currentInput.value = "";
   nextTick(scrollToBottom);
 };
 
 const scrollToBottom = () => {
-  if (scrollContainer.value) {
-    scrollContainer.value.scrollTo({
-      top: scrollContainer.value.scrollHeight,
-      behavior: "smooth",
-    });
-  }
+  if (scrollContainer.value)
+    scrollContainer.value.scrollTo({ top: scrollContainer.value.scrollHeight, behavior: "smooth" });
 };
 
-onMounted(() => {
-  connectWS();
-  initThree();
-});
+onMounted(() => { connectWS(); initThree(); });
 </script>
 
 <style scoped>
-/* BACKGROUND ANIMATION STYLES */
-.shape {
-  position: absolute;
-  color: #cbd5e1;
-  font-size: 5rem;
-  font-weight: 900;
-  opacity: 0.15;
-  user-select: none;
-  animation: float 20s infinite linear;
-}
+@import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;700;800;900&family=DM+Mono:wght@400;500&family=DM+Sans:ital,opsz,wght@0,9..40,400;0,9..40,500;0,9..40,700;1,9..40,400&display=swap');
 
-.shape-1 { top: 10%; left: 10%; animation-duration: 25s; }
-.shape-2 { top: 60%; left: 15%; animation-duration: 30s; animation-direction: reverse; }
-.shape-3 { top: 20%; left: 80%; animation-duration: 22s; }
-.shape-4 { top: 70%; left: 85%; animation-duration: 28s; }
-.shape-5 { top: 40%; left: 50%; animation-duration: 35s; }
-
-@keyframes float {
-  0% { transform: translateY(0) rotate(0deg); }
-  50% { transform: translateY(-100px) rotate(180deg); }
-  100% { transform: translateY(0) rotate(360deg); }
-}
-
-/* CONTENT STYLES */
-.markdown-content :deep(.math-block) {
-  margin: 2rem 0;
-  padding: 2rem;
-  background: #000;
-  color: #fff;
-  overflow-x: auto;
-  font-size: 1.6rem;
-  border-radius: 12px;
-  box-shadow: 2px 2px 0px 0px #2563eb;
-}
-
-.markdown-content :deep(.katex-display) { margin: 0; }
-.markdown-content :deep(p) { margin-bottom: 1.5rem; }
-.markdown-content :deep(strong) { color: #2563eb; font-weight: 900; }
-
+/* ── ROOT ── */
 .bridge-container {
-  background-image: radial-gradient(#cbd5e1 1px, transparent 1px);
-  background-size: 32px 32px;
+  font-family: 'DM Sans', sans-serif;
+  background-color: #F5F4EF;
 }
 
-.fade-enter-active,
-.fade-leave-active { transition: opacity 0.8s ease; }
-.fade-enter-from,
-.fade-leave-to { opacity: 0; }
-
-::-webkit-scrollbar { width: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb {
-  background: #000;
-  border-radius: 0;
-  border: 2px solid #f8fafc;
+/* ── GRID ── */
+.grid-bg {
+  background-image:
+    linear-gradient(to right, #1E3A8A08 1px, transparent 1px),
+    linear-gradient(to bottom, #1E3A8A08 1px, transparent 1px);
+  background-size: 48px 48px;
 }
 
-.markdown-content :deep(.code-wrapper) {
-  position: relative;
-  margin: 1.5rem 0;
+/* ── GLYPHS ── */
+.glyph {
+  position: absolute;
+  font-family: 'Syne', sans-serif;
+  font-size: 9rem;
+  font-weight: 900;
+  color: #2563EB;
+  opacity: 0.04;
+  user-select: none;
+  animation: glyph-drift 28s infinite ease-in-out;
+}
+.glyph-1 { top: 8%; left: 4%; }
+.glyph-2 { top: 60%; left: 8%; animation-delay: -8s; animation-direction: reverse; }
+.glyph-3 { top: 12%; left: 72%; animation-delay: -14s; }
+.glyph-4 { top: 72%; left: 78%; animation-delay: -4s; }
+.glyph-5 { top: 38%; left: 44%; animation-delay: -20s; animation-duration: 38s; }
+
+@keyframes glyph-drift {
+  0%, 100% { transform: translateY(0) rotate(0deg) scale(1); }
+  50% { transform: translateY(-50px) rotate(15deg) scale(1.05); }
 }
 
-.markdown-content :deep(pre.code-block) {
-  background: #0f172a;
-  color: #e2e8f0;
-  padding: 1.5rem;
-  border-radius: 12px;
-  overflow-x: auto;
-  box-shadow: 2px 2px 0px 0px #2563eb;
+/* ── SPLASH ── */
+.splash-bg {
+  background: radial-gradient(ellipse at 30% 40%, #1d3f9a 0%, #0e1e5c 50%, #030818 100%);
 }
 
-.markdown-content :deep(.code-block-stream) {
-  background: #0f172a;
-  color: #e2e8f0;
-  padding: 1.5rem;
-  border-radius: 12px;
-  white-space: pre-wrap;
+.corner-frame {
+  position: absolute;
+  width: 64px; height: 64px;
+  border-color: rgba(59,130,246,0.35);
+  border-style: solid; border-width: 0;
+}
+.corner-tl { top: 24px; left: 24px; border-top-width: 2px; border-left-width: 2px; }
+.corner-tr { top: 24px; right: 24px; border-top-width: 2px; border-right-width: 2px; }
+.corner-bl { bottom: 24px; left: 24px; border-bottom-width: 2px; border-left-width: 2px; }
+.corner-br { bottom: 24px; right: 24px; border-bottom-width: 2px; border-right-width: 2px; }
+
+.splash-title {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(4rem, 10vw, 6.5rem);
+  font-weight: 900;
+  line-height: 0.9;
+  color: #fff;
+  letter-spacing: -0.03em;
+  text-transform: uppercase;
 }
 
-.markdown-content :deep(code) {
-  font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.95rem;
+.subject-pill {
+  font-family: 'DM Mono', monospace;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 14px;
+  border-radius: 100px;
+  background: rgba(59,130,246,0.12);
+  border: 1px solid rgba(59,130,246,0.35);
+  color: #93c5fd;
 }
 
-.markdown-content :deep(.copy-btn) {
-  background: #fff;
-  border: 2px solid #000;
-  padding: 6px 10px;
-  font-weight: bold;
+.splash-btn {
+  font-family: 'Syne', sans-serif;
+  font-size: 1rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  padding: 16px 48px;
+  background: #FBBF24;
+  color: #0a0f2e;
+  border: none;
+  border-radius: 4px;
   cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+}
+.splash-btn:hover {
+  background: #fff;
+  box-shadow: 0 0 40px 8px rgba(251,191,36,0.25);
+  transform: translateY(-2px);
+}
+
+/* ── HEADER ── */
+.logo-mark {
+  width: 36px; height: 36px;
+  background: #2563EB;
+  display: flex; align-items: center; justify-content: center;
   border-radius: 8px;
-  box-shadow: 2px 2px 0px 0px #000;
+  font-family: 'Syne', sans-serif;
+  font-weight: 900; font-size: 13px;
+  letter-spacing: -0.03em; color: #fff;
 }
-.markdown-content :deep(.copy-btn:hover) {
-  background: #facc15;
+
+.status-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%; display: inline-block;
 }
+.status-dot.online  { background: #34d399; box-shadow: 0 0 6px #34d39980; animation: pulse-dot 2s infinite; }
+.status-dot.offline { background: #f87171; }
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 1; } 50% { opacity: 0.5; }
+}
+
+/* ── SETUP FORM ── */
+.setup-card {
+  max-width: 440px;
+  width: 100%;
+  background: #fff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 20px;
+  padding: 36px 32px 32px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 8px 40px rgba(37,99,235,0.10);
+}
+
+.setup-card-stripe {
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: linear-gradient(to right, #2563EB, #FBBF24);
+}
+
+.setup-title {
+  font-family: 'Syne', sans-serif;
+  font-size: 2rem;
+  font-weight: 900;
+  color: #1E3A8A;
+  letter-spacing: -0.03em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.setup-subtitle {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  color: #93c5fd;
+  margin-top: 6px;
+}
+
+.form-label {
+  font-family: 'DM Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.15em;
+  color: #1E3A8A;
+  display: block;
+}
+
+.form-input {
+  width: 100%;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 10px;
+  padding: 14px 16px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px;
+  font-weight: 500;
+  color: #1e3a8a;
+  background: #fff;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.form-input:focus {
+  border-color: #2563EB;
+  box-shadow: 0 0 0 4px rgba(37,99,235,0.1);
+}
+.form-input::placeholder { color: #94a3b8; }
+
+.start-btn {
+  width: 100%;
+  padding: 16px;
+  background: #2563EB;
+  color: #fff;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(37,99,235,0.3);
+  margin-top: 8px;
+}
+.start-btn:hover { background: #1d4ed8; transform: translateY(-2px); box-shadow: 0 8px 24px rgba(37,99,235,0.35); }
+
+/* ── MESSAGES ── */
+.msg-bubble {
+  position: relative;
+  border-radius: 16px;
+  padding: 28px 32px 24px;
+  border: 1.5px solid transparent;
+}
+
+.msg-assistant {
+  background: #FFFFFF;
+  color: #1e3a8a;
+  border-color: #dbeafe;
+  box-shadow: 0 4px 24px rgba(37,99,235,0.07);
+}
+
+.msg-user {
+  background: #1E3A8A;
+  color: #dbeafe;
+  border-color: #1e40af;
+  margin-left: auto;
+}
+
+.msg-badge {
+  position: absolute;
+  top: -11px; left: 20px;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.12em;
+  padding: 3px 10px; border-radius: 100px;
+}
+
+.badge-assistant { background: #FBBF24; color: #1e3a8a; }
+.badge-user      { background: #2563EB; color: #dbeafe; }
+
+/* ── TTS BUTTON ── */
+.tts-btn {
+  font-size: 14px;
+  background: #eff6ff;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 8px;
+  padding: 6px 10px;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+}
+.tts-btn:hover { background: #FBBF24; border-color: #FBBF24; }
+
+/* ── TYPING DOTS ── */
+.typing-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: #2563EB;
+  animation: bounce-dot 0.8s infinite ease-in-out;
+  display: inline-block;
+}
+@keyframes bounce-dot {
+  0%, 100% { transform: translateY(0); opacity: 0.4; }
+  50%       { transform: translateY(-6px); opacity: 1; }
+}
+
+/* ── FOOTER ── */
+.footer-bar {
+  background: linear-gradient(to top, #F5F4EF 70%, transparent);
+  padding-top: 24px;
+}
+
+.subject-tag {
+  background: #1E3A8A;
+  color: #93c5fd;
+  border-radius: 8px;
+  padding: 0 14px;
+  height: 52px;
+  align-items: center;
+  font-family: 'DM Mono', monospace;
+  font-size: 10px; font-weight: 500;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  white-space: nowrap; flex-shrink: 0;
+}
+
+.query-input {
+  height: 56px; padding: 0 22px;
+  font-family: 'DM Sans', sans-serif;
+  font-size: 15px; font-weight: 500;
+  color: #1e3a8a;
+  background: white;
+  border: 1.5px solid #bfdbfe;
+  border-radius: 12px;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.query-input:focus { border-color: #2563EB; box-shadow: 0 0 0 4px rgba(37,99,235,0.1); }
+.query-input::placeholder { color: #94a3b8; }
+.query-input:disabled { background: #f1f5f9; cursor: not-allowed; }
+
+.send-btn {
+  height: 56px; padding: 0 28px;
+  background: #FBBF24; color: #1e3a8a;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 13px;
+  text-transform: uppercase; letter-spacing: 0.1em;
+  border: none; border-radius: 12px;
+  cursor: pointer; flex-shrink: 0;
+  transition: background 0.2s, transform 0.15s, box-shadow 0.15s;
+  box-shadow: 0 4px 16px rgba(251,191,36,0.4);
+}
+.send-btn:hover:not(:disabled) { background: #fcd34d; transform: translateY(-2px); box-shadow: 0 6px 24px rgba(251,191,36,0.5); }
+.send-btn:active:not(:disabled) { transform: translateY(0); box-shadow: none; }
+.send-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+/* ── EXPERT CONTENT ── */
+.expert-content :deep(.katex) { font-size: 1.1em; }
+
+.expert-content :deep(.katex-display-wrap) {
+  margin: 1.5rem 0; padding: 1.25rem 1.75rem;
+  background: #0c1445; border-radius: 10px;
+  overflow-x: auto; border-left: 4px solid #FBBF24;
+  display: block;
+}
+.expert-content :deep(.katex-display-wrap .katex),
+.expert-content :deep(.katex-display-wrap .katex *),
+.expert-content :deep(.katex-display-wrap .katex-html) { color: #dbeafe !important; }
+.expert-content :deep(.katex-display) { margin: 0; overflow-x: auto; }
+
+.expert-content :deep(.inline-math) {
+  display: inline;
+  vertical-align: middle;
+}
+.expert-content :deep(.inline-math .katex) { color: #1e3a8a; font-size: 1.05em; }
+.msg-user .expert-content :deep(.inline-math .katex) { color: #dbeafe; }
+.msg-user .expert-content :deep(.katex-display-wrap) { background: rgba(255,255,255,0.06); }
+.msg-user .expert-content :deep(.katex-display-wrap .katex),
+.msg-user .expert-content :deep(.katex-display-wrap .katex *) { color: #dbeafe !important; }
+
+.expert-content :deep(table) {
+  width: 100%; border-collapse: collapse;
+  margin: 1.5rem 0; border-radius: 10px;
+  overflow: hidden; border: 1.5px solid #bfdbfe;
+}
+.expert-content :deep(th) {
+  background: #1E3A8A; color: #dbeafe;
+  padding: 10px 14px;
+  font-family: 'Syne', sans-serif;
+  font-weight: 800; font-size: 12px;
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.expert-content :deep(td) {
+  border: 1px solid #dbeafe; padding: 10px 14px;
+  font-family: 'DM Mono', monospace; font-size: 13px; text-align: center;
+}
+.expert-content :deep(tr:nth-child(even) td) { background: #f0f7ff; }
+
+.expert-content :deep(p) { margin-bottom: 1.25rem; }
+.expert-content :deep(strong) { color: #1d4ed8; font-weight: 800; }
+
+.expert-content :deep(code) {
+  font-family: 'DM Mono', monospace;
+  background: #dbeafe; color: #1e3a8a;
+  padding: 2px 6px; border-radius: 4px; font-size: 0.875em;
+}
+
+.expert-content :deep(.code-wrapper) { position: relative; margin: 1.5rem 0; }
+.expert-content :deep(pre.code-block) {
+  background: #0c1445; color: #bfdbfe;
+  padding: 1.25rem; border-radius: 10px;
+  overflow-x: auto; border-left: 4px solid #2563EB;
+}
+.expert-content :deep(.code-block-stream) {
+  background: #0c1445; color: #bfdbfe;
+  padding: 1.25rem; border-radius: 10px; white-space: pre-wrap;
+}
+.expert-content :deep(pre.code-block code) { background: transparent; color: #93c5fd; font-size: 0.9rem; }
+
+.expert-content :deep(.copy-btn) {
+  background: #fff; border: 1.5px solid #bfdbfe;
+  padding: 5px 10px; font-weight: 700;
+  cursor: pointer; border-radius: 8px;
+  box-shadow: 2px 2px 0 #bfdbfe;
+}
+.expert-content :deep(.copy-btn:hover) { background: #FBBF24; border-color: #FBBF24; }
+
+.expert-content :deep(blockquote) {
+  border-left: 4px solid #FBBF24; background: #fffbeb;
+  padding: 12px 20px; border-radius: 0 8px 8px 0;
+  margin: 1.25rem 0; font-style: italic; color: #78350f;
+}
+
+/* ── SCROLLBAR ── */
+.custom-scrollbar::-webkit-scrollbar { width: 6px; }
+.custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.custom-scrollbar::-webkit-scrollbar-thumb { background: #bfdbfe; border-radius: 100px; }
+.custom-scrollbar::-webkit-scrollbar-thumb:hover { background: #2563EB; }
+
+/* ── TRANSITIONS ── */
+.splash-fade-enter-active, .splash-fade-leave-active { transition: opacity 0.7s ease; }
+.splash-fade-enter-from, .splash-fade-leave-to { opacity: 0; }
 </style>
