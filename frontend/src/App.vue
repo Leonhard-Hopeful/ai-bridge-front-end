@@ -12,7 +12,7 @@ const currentYear = new Date().getFullYear()
 
 <template>
   <div class="min-h-screen flex flex-col font-sans text-black bg-slate-50">
-    <nav class="bg-black p-5 sticky top-0 z-[100] border-b-4 border-black">
+    <nav v-if="route.path !== '/experts'" class="bg-black p-5 sticky top-0 z-[100] border-b-4 border-black">
       <div class="max-w-6xl mx-auto flex justify-between items-center text-white">
         <router-link to="/" class="text-2xl font-black uppercase flex items-center gap-2">
           <font-awesome-icon icon="fa-solid fa-bridge" class="text-yellow-400" />
