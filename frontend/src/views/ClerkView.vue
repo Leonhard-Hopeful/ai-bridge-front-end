@@ -34,10 +34,10 @@
         <!-- ── Card Header ── -->
         <div class="card-header">
           <div>
-            <div class="flex items-center gap-3 mb-0.5">
+            <!-- <div class="flex items-center gap-3 mb-0.5">
               <div class="logo-mark">DC</div>
               <h2 class="card-title">Digital Clerk</h2>
-            </div>
+            </div> -->
             <p class="card-subtitle">Handwriting → Digital Notes</p>
           </div>
 
@@ -339,7 +339,7 @@ const downloadFile = async (format) => {
 
 /* ── CARD HEADER ── */
 .card-header {
-  background: #1E1B4B;
+  background: #07070a;
   padding: 20px 28px;
   display: flex;
   align-items: center;
